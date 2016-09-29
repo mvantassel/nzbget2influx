@@ -24,14 +24,14 @@ function writeToInflux(seriesName, values, tags, callback) {
     return influxClient.writePoint(seriesName, values, tags, callback);
 }
 
-var ng = new nzbget({
+const ng = new nzbget({
     url: `${nzbgetConfig.host}:${nzbgetConfig.port}`,
     username: nzbgetConfig.username,
     password: nzbgetConfig.password
 });
 
 function onGetNZBData(data) {
-    var nzbs = data.result;
+    let nzbs = data.result;
 
     nzbs.forEach(function(nzb) {
         let value = {
@@ -52,13 +52,17 @@ function onGetNZBData(data) {
         count: nzbs.length
     }, null, function() {
         console.dir(`wrote ${nzbs.length} nzbs data to influx: ${new Date()}`);
+        restart();
     });
+}
+
+function restart() {
+    // Every {checkInterval} seconds
+    setTimeout(getAllTheMetrics, checkInterval);
 }
 
 function getAllTheMetrics() {
     ng.listgroups().then(onGetNZBData);
 }
 
-// Every {checkInterval} seconds
 getAllTheMetrics();
-setInterval(getAllTheMetrics, checkInterval);
