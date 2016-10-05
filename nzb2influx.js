@@ -56,13 +56,17 @@ function onGetNZBData(data) {
     });
 }
 
-function restart() {
+function restart(err) {
+    if (err) {
+        console.log(err);
+    }
+
     // Every {checkInterval} seconds
     setTimeout(getAllTheMetrics, checkInterval);
 }
 
 function getAllTheMetrics() {
-    ng.listgroups().then(onGetNZBData);
+    ng.listgroups().then(onGetNZBData).catch(restart);
 }
 
 getAllTheMetrics();
