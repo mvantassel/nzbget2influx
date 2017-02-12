@@ -20,8 +20,16 @@ const nzbgetConfig = {
     password: process.env.NZBGET_PASSWORD || ''
 };
 
-function writeToInflux(seriesName, values, tags, callback) {
-    return influxClient.writePoint(seriesName, values, tags, callback);
+function writeToInflux(seriesName, values, tags) {
+    var payload = {
+        fields: values
+    };
+
+    if (tags) {
+        payload.tags = tags;
+    }
+
+    return influxClient.writeMeasurement(seriesName, [payload]);
 }
 
 const ng = new nzbget({
@@ -43,14 +51,14 @@ function onGetNZBData(data) {
             category: nzb.Category
         };
 
-        writeToInflux('nzb', value, tags, function() {
+        writeToInflux('nzb', value, tags).then(function() {
             console.dir(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`);
         });
     });
 
     writeToInflux('nzbs', {
         count: nzbs.length
-    }, null, function() {
+    }, null).then(function() {
         console.dir(`wrote ${nzbs.length} nzbs data to influx: ${new Date()}`);
         restart();
     });
