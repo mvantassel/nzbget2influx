@@ -2,6 +2,7 @@
 
 const Influx = require('influx');
 const nzbget = require('node-nzbget');
+const chalk = require('chalk');
 
 const checkInterval = process.env.UPDATE_INTERVAL_MS || 1000 * 30;
 
@@ -20,8 +21,13 @@ const nzbgetConfig = {
     password: process.env.NZBGET_PASSWORD || ''
 };
 
+function log(message, color) {
+    color = color || 'black';
+    console.log(chalk[color](message));
+}
+
 function writeToInflux(seriesName, values, tags) {
-    var payload = {
+    let payload = {
         fields: values
     };
 
@@ -52,22 +58,20 @@ function onGetNZBData(data) {
         };
 
         writeToInflux('nzb', value, tags).then(function() {
-            console.dir(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`);
+            log(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`, 'blue');
         });
     });
 
     writeToInflux('nzbs', {
         count: nzbs.length
     }, null).then(function() {
-        console.dir(`wrote ${nzbs.length} nzbs data to influx: ${new Date()}`);
+        log(`wrote ${nzbs.length} nzb data to influx: ${new Date()}`, 'blue');
         restart();
     });
 }
 
-function restart(err) {
-    if (err) {
-        console.log(err);
-    }
+function restart() {
+    log(`${new Date()}: fetching nzbget metrics`, 'green');
 
     // Every {checkInterval} seconds
     setTimeout(getAllTheMetrics, checkInterval);
