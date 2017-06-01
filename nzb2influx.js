@@ -16,7 +16,7 @@ const nzbgetConfig = {
     host: process.env.NZBGET_HOST || 'localhost',
     protocol: process.env.NZBGET_PROTOCOL ||'http',
     port: process.env.NZBGET_PORT || 6789,
-    username: process.env.NZBGET_PASSWORD || '',
+    username: process.env.NZBGET_USERNAME || '',
     password: process.env.NZBGET_PASSWORD || ''
 };
 
