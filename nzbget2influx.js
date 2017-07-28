@@ -2,7 +2,6 @@
 
 const Influx = require('influx');
 const nzbget = require('node-nzbget');
-const chalk = require('chalk');
 
 const checkInterval = process.env.UPDATE_INTERVAL_MS || 1000 * 30;
 
@@ -21,9 +20,8 @@ const nzbgetConfig = {
     password: process.env.NZBGET_PASSWORD || ''
 };
 
-function log(message, color) {
-    color = color || 'black';
-    console.log(chalk[color](message));
+function log(message) {
+    console.log(message);
 }
 
 function writeToInflux(seriesName, values, tags) {
@@ -45,6 +43,8 @@ const ng = new nzbget({
 });
 
 function onGetNZBData(data) {
+    log(`${new Date()}: Parsing NZB Data`);
+
     let nzbs = data.result;
 
     nzbs.forEach(function(nzb) {
@@ -58,27 +58,34 @@ function onGetNZBData(data) {
         };
 
         writeToInflux('nzb', value, tags).then(function() {
-            log(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`, 'blue');
+            log(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`);
         });
     });
 
     writeToInflux('nzbs', {
         count: nzbs.length
     }, null).then(function() {
-        log(`wrote ${nzbs.length} nzb data to influx: ${new Date()}`, 'blue');
+        log(`wrote ${nzbs.length} nzb data to influx: ${new Date()}`);
         restart();
     });
 }
 
-function restart() {
-    log(`${new Date()}: fetching nzbget metrics`, 'green');
+function handleError(err) {
+    log(`${new Date()}: Error`);
+    log(err);
+}
 
+function restart() {
     // Every {checkInterval} seconds
     setTimeout(getAllTheMetrics, checkInterval);
 }
 
 function getAllTheMetrics() {
-    ng.listgroups().then(onGetNZBData).catch(restart);
+    ng.listgroups().then(onGetNZBData).catch(err => {
+        handleError(err);
+        restart();
+    });
 }
 
+log(`${new Date()}: Initialize NZB2Influx`);
 getAllTheMetrics();
