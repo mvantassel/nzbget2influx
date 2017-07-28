@@ -1,11 +1,11 @@
 {
   "name": "nzb2influx",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "scripts": {
-    "start": "node nzb2influx.js"
+    "start": "node nzbget2influx.js"
   },
-  "devDependencies": {
+  "dependencies": {
     "influx": "~5.0",
     "node-nzbget": "0.0.4"
   }

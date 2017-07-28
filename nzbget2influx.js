@@ -20,8 +20,12 @@ const nzbgetConfig = {
     password: process.env.NZBGET_PASSWORD || ''
 };
 
+function log(message) {
+    console.log(message);
+}
+
 function writeToInflux(seriesName, values, tags) {
-    var payload = {
+    let payload = {
         fields: values
     };
 
@@ -39,6 +43,8 @@ const ng = new nzbget({
 });
 
 function onGetNZBData(data) {
+    log(`${new Date()}: Parsing NZB Data`);
+
     let nzbs = data.result;
 
     nzbs.forEach(function(nzb) {
@@ -52,29 +58,34 @@ function onGetNZBData(data) {
         };
 
         writeToInflux('nzb', value, tags).then(function() {
-            console.dir(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`);
+            log(`wrote ${nzb.NZBName} nzb data to influx: ${new Date()}`);
         });
     });
 
     writeToInflux('nzbs', {
         count: nzbs.length
     }, null).then(function() {
-        console.dir(`wrote ${nzbs.length} nzbs data to influx: ${new Date()}`);
+        log(`wrote ${nzbs.length} nzb data to influx: ${new Date()}`);
         restart();
     });
 }
 
-function restart(err) {
-    if (err) {
-        console.log(err);
-    }
+function handleError(err) {
+    log(`${new Date()}: Error`);
+    log(err);
+}
 
+function restart() {
     // Every {checkInterval} seconds
     setTimeout(getAllTheMetrics, checkInterval);
 }
 
 function getAllTheMetrics() {
-    ng.listgroups().then(onGetNZBData).catch(restart);
+    ng.listgroups().then(onGetNZBData).catch(err => {
+        handleError(err);
+        restart();
+    });
 }
 
+log(`${new Date()}: Initialize NZB2Influx`);
 getAllTheMetrics();
